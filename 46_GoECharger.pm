@@ -46,6 +46,7 @@ my $reading_keys_json_default='';
 my $reading_keys_json_minimal='';
 my $reading_keys_json;
 my $maxamp=16;
+my $interval_default = 300;
 
 
 my $icodef='disabled.*:ev-station@darkgrey not_allowed.*:ev-station@white ready_no_car.*:ev-station@blue charging.*:ev-station@darkorange waiting_for_car.*:ev-station@pink finished.*:ev-station@lime error.*:ev-station@red .*:ev-station@yellow';
@@ -284,7 +285,7 @@ sub GoECharger_Define($$) {
     my $token               = $a[2];
     #$hash->{HOST}           = $host;
     $hash->{CLOUDTOKEN}     = $token;
-    $hash->{INTERVAL}       = 60;
+    $hash->{INTERVAL}       = $interval_default;
     $hash->{VERSION}        = $version;
     $hash->{NOTIFYDEV}      = "global";
     $hash->{ActionQueue}    = [];
@@ -377,8 +378,8 @@ sub GoECharger_Attr(@) {
     if( $attrName eq "interval" ) {
         if( $cmd eq "set" ) {
             if( $attrVal < 5 ) {
-                Log3 $name, 3, "GoECharger ($name) - interval too small, please use something >= 5 (sec), default is 60 (sec)";
-                return "interval too small, please use something >= 5 (sec), default is 60 (sec)";
+                Log3 $name, 3, "GoECharger ($name) - interval too small, please use something >= 5 (sec), default is $interval_default (sec)";
+                return "interval too small, please use something >= 5 (sec), default is $interval_default (sec)";
             
             } else {
                 RemoveInternalTimer($hash);
@@ -388,7 +389,7 @@ sub GoECharger_Attr(@) {
             }
         } elsif( $cmd eq "del" ) {
             RemoveInternalTimer($hash);
-            $hash->{INTERVAL} = 60;
+            $hash->{INTERVAL} = $interval_default;
             Log3 $name, 3, "GoECharger ($name) - set interval to default";
             GoECharger_Timer_GetData($hash);
         }
@@ -854,7 +855,7 @@ sub GoECharger_WriteReadings($$$) {
     <br>
         <code>define myGoE GoECharger 192.168.1.34</code><br>
     <br>
-    This statement creates a device with the name myGoE and the Host IP 192.168.1.34 and a default polling interval of 60 sec.<br>
+    This statement creates a device with the name myGoE and the Host IP 192.168.1.34 and a default polling interval of 300 sec.<br>
     After the device has been created, the current data of the go-Echarger are automatically read and default readings will be generated.<br>
     </ul>
     <br><br>
@@ -997,7 +998,7 @@ sub GoECharger_WriteReadings($$$) {
     <a name="GoEChargerattribute"></a>
     <b>Attribute</b>
     <ul>
-        <li>interval                    - interval in seconds for automatically fetch data (default 60, min. 5)</li>
+        <li>interval                    - interval in seconds for automatically fetch data (default 300, min. 5)</li>
         <li>used_api_keys               - use predefined sets of JSON API keys which will be shown as readings: <br>
         use predefined settings 'default', 'minima'l or 'all' ore define your own space separetet list of JSON API keys<br>
         (see above or API reference or Internal [UsedAPIKeys] for examples).</li>
