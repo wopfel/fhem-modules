@@ -439,7 +439,7 @@ sub GoECharger_Set($@) {
     
     my ($hash, $name, $cmd, $arg) = @_;
     my $queue_cmd='';
-    my $setpath='mqtt?payload='; #amp=7
+    my $setpath='payload='; #amp=7
     
     if( $cmd eq 'allow_charging' ) {
         if (($arg == 0) or ($arg==1)){
@@ -605,6 +605,12 @@ sub GoECharger_GetData($) {
     my $uri             = "api.go-e.co/api_status?token=$token";
 
     readingsSingleUpdate($hash,'Http_state','fetch data - ' . scalar(@{$hash->{ActionQueue}}) . ' entries in the Queue',1);
+
+    # "status" is the same call when directly connected to the box. But when using the cloud API, it's a different URI.
+    if ( $path ne "status" ) {
+        Log3 $name, 4, "GoECharger ($name) - path is set as '$path'";
+        $uri = "api.go-e.co/api?token=$token&$path";
+    }
 
     HttpUtils_NonblockingGet(
         {
