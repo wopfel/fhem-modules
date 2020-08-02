@@ -723,7 +723,7 @@ sub GoECharger_WriteReadings($$$) {
     my $newreadingname;
     my $tmpr;
     my $tmpv;
-    my $numphases;
+    my $numphases = 0;
     my $tmpstate;
     $reading_keys_json=$hash->{USED_API_KEYS};
     my @reading_keys=split(/ /,$reading_keys_json);
@@ -744,6 +744,21 @@ sub GoECharger_WriteReadings($$$) {
         $value = sprintf( "%.1f", $value/10 )         if  $datakey eq "dwo";
         $value = sprintf( "%.2f", $value/3_600_000 )  if  $datakey eq "dto";
         $value = sprintf( "%06X", $value )            if  $datakey eq "cid" or $datakey eq "cch" or $datakey eq "cfi";
+
+        if ( $datakey eq "ast" ) {
+            if    ( $value == 0 )  { $value = "access_open"; }
+            elsif ( $value == 2 )  { $value = "price_or_auto"; }
+            else                   { $value = "by_RFID_or_App"; }
+        }
+
+        # Phases available
+        if ( $datakey eq "pha" ) {
+            $numphases++ if ($value & 8)==8;
+            $numphases++ if ($value & 16)==16;
+            $numphases++ if ($value & 32)==32;
+            $value = sprintf( "%b", $value );  # show binary
+        }
+
         readingsBulkUpdate( $hash, $newreadingname, $value );
     }
 
