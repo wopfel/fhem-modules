@@ -721,8 +721,6 @@ sub GoECharger_WriteReadings($$$) {
     Log3 $name, 5, "GoECharger ($name) - JSON-Dumper: " . Dumper $responsedata;
 
     my $newreadingname;
-    my $tmpr;
-    my $tmpv;
     my $numphases = 0;
     my $tmpstate;
     $reading_keys_json=$hash->{USED_API_KEYS};
@@ -760,85 +758,31 @@ sub GoECharger_WriteReadings($$$) {
             $value = sprintf( "%b", $value );  # show binary
         }
 
+        # Calculating energy
+        if ( $datakey eq "nrg" ) {
+            my @vtmp = @{ $responsedata->{'data'}{'nrg'} };
+            my $tmpr = "KW_charging_measured";
+            my $tmpv = sprintf( "%.2f", $vtmp[11]/100 );
+            readingsBulkUpdate( $hash, $tmpr, $tmpv );
+        }
+
+        # Cable lock state at box
+        if ( $datakey eq "ust" ) {
+            if    ( $value == 0 )  { $value = "while_car_present"; }
+            elsif ( $value == 1 )  { $value = "while_charging"; }
+            else                   { $value = "locked_always"; }
+        }
+        
         readingsBulkUpdate( $hash, $newreadingname, $value );
     }
 
-    # walkthrough received key - value pairs
-    while( my ($r,$v) = each %{$responsedata} ) {
-        $newreadingname=$goevar{$r};
-        $newreadingname=$r if ($newreadingname eq '');
-        $newreadingname = makeReadingName($newreadingname);
-        if ($r eq 'eto'){
-            $v=sprintf("%.1f",$v/10);
-            
-        }elsif($r eq 'dws'){
-            $v=sprintf("%.1f",$v/360000);
-            
-        }elsif($r eq 'ast'){
-            if ($v==0){
-                $tmpv='access_open';
-            }elsif($v==2){
-                $tmpv='price_or_auto';
-            }else{ #($v==1)
-                $tmpv='by_RFID_or_App';
-            }
-            $v=$tmpv; 
-            
-        }elsif($r eq 'dwo'){
-            $v=$v/10;
-            
-        }elsif($r eq 'dto'){
-            $v=sprintf("%.2f",$v/3600000);
-
-        }elsif($r eq 'pha'){
-            $numphases=0; #used to calculate available power
-            $numphases +=1 if (($v & 8)==8);
-            $numphases +=1 if (($v & 16)==16);
-            $numphases +=1 if (($v & 32)==32);
-            $v=sprintf("%b",$v); #show binary
-            
-        }elsif($r eq 'ama'){
-            $maxamp=$v;
-            
-        }elsif($r eq 'cid'){
-            $v=sprintf("%06X",$v);
-            
-        }elsif($r eq 'cch'){
-            $v=sprintf("%06X",$v);
-            
-        }elsif($r eq 'cfi'){
-            $v=sprintf("%06X",$v);
-                        
-        }elsif($r eq 'nrg'){
-            my @vtmp=@{$responsedata->{'nrg'}};
-            $tmpr='KW_charging_measured';
-            $tmpv=sprintf("%.2f",$vtmp[11]/100);
-            readingsBulkUpdate($hash,$tmpr,$tmpv);
-        
-        }elsif($r eq 'ust'){
-            if ($v==0){
-                $tmpv='while_car_present';
-            }elsif($v==1){
-                $tmpv='while_charging';
-            }else{ #($v==2)
-                $tmpv='locked_always';
-            }
-            $v=$tmpv; 
-        }       
-                
-        # test if $r is known at @reading_keys and create reaading ...
-        my %rkeys = map { $_, 1 } @reading_keys;
-        if( $rkeys{ $r } ){
-            readingsBulkUpdate($hash,$newreadingname,$v);
-        }
-    }
     # calculate available power at 230V~
-    readingsBulkUpdate($hash,'KW_preset_calculated',sprintf("%.2f",($responsedata->{amp})*$numphases*0.230)) if(defined($responsedata->{amp}));
+    readingsBulkUpdate($hash,'KW_preset_calculated',sprintf("%.2f",($responsedata->{'data'}->{'amp'})*$numphases*0.230)) if(defined($responsedata->{'data'}{'amp'}));
 
     # create state derived from 'alw' and 'car'
-    $tmpv=sprintf("%d",($responsedata->{car}));
+    my $tmpv=sprintf("%d",($responsedata->{'data'}->{car}));
     if ($tmpv ==1){
-        if (($responsedata->{alw})==1){
+        if (($responsedata->{'data'}->{alw})==1){
             $tmpstate='ready_no_car';
         }else{
             $tmpstate='not_allowed';
@@ -852,7 +796,7 @@ sub GoECharger_WriteReadings($$$) {
     }else{
         $tmpstate='unknown';
     }
-    if (sprintf("%d",($responsedata->{err})) >0){
+    if (sprintf("%d",($responsedata->{'data'}->{err})) >0){
         $tmpstate='error';
     }
     readingsBulkUpdate($hash,'state',$tmpstate);
