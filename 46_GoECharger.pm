@@ -746,8 +746,9 @@ sub GoECharger_WriteReadings($$$) {
         # Access control state
         if ( $datakey eq "ast" ) {
             if    ( $value == 0 )  { $value = "access_open"; }
+            elsif ( $value == 1 )  { $value = "by_RFID_or_App"; }
             elsif ( $value == 2 )  { $value = "price_or_auto"; }
-            else                   { $value = "by_RFID_or_App"; }
+            else                   { $value = "*unknown*"; }
         }
 
         # Phases available
@@ -770,7 +771,8 @@ sub GoECharger_WriteReadings($$$) {
         if ( $datakey eq "ust" ) {
             if    ( $value == 0 )  { $value = "while_car_present"; }
             elsif ( $value == 1 )  { $value = "while_charging"; }
-            else                   { $value = "locked_always"; }
+            elsif ( $value == 2 )  { $value = "locked_always"; }
+            else                   { $value = "*unknown*"; }
         }
         
         readingsBulkUpdate( $hash, $newreadingname, $value );
