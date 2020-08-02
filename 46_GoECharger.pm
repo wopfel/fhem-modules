@@ -49,7 +49,6 @@ my $maxamp=16;
 
 my $icodef='disabled.*:ev-station@darkgrey not_allowed.*:ev-station@white ready_no_car.*:ev-station@blue charging.*:ev-station@darkorange waiting_for_car.*:ev-station@pink finished.*:ev-station@lime error.*:ev-station@red .*:ev-station@yellow';
 
-sub GoECharger_API_V15($) {
     %goevar         =   (   
                         version =>  'version',          #R# JSON, "B": normal, "C":  wenn Verschl. aktiviert 
                         rbc     =>  'reboot_counter',   #R# Anzahl Boot, .  
@@ -227,7 +226,6 @@ $reading_keys_json_default='afi adi aho alw ama amp amt ast azo car cbl cch cfi 
 $reading_keys_json_minimal='alw amp ast car dws err eto ust';
 $reading_keys_json=$reading_keys_json_default;
 
-}
 
 
 # Declare functions
@@ -298,7 +296,7 @@ sub GoECharger_Define($$) {
     $modules{GoECharger}{defptr}{CLOUDTOKEN} = $hash;
     
     # API related internals and attrib
-    GoECharger_API_V15($hash);
+    #GoECharger_API_V15($hash);
     $hash->{USED_API_KEYS}  = $reading_keys_json_default;
     CommandAttr(undef,$name.' used_api_keys default');
     #  generic attrib
@@ -737,6 +735,7 @@ sub GoECharger_WriteReadings($$$) {
 
         # Look up a friendly reading name
         $newreadingname=$goevar{$datakey};
+        Log3 $name, 5, "GoECharger ($name) - newreadingname: $newreadingname";
         $newreadingname=$datakey if ($newreadingname eq '');
 
         readingsBulkUpdate( $hash, $newreadingname, $value );
