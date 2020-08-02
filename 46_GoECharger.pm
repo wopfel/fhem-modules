@@ -277,13 +277,14 @@ sub GoECharger_Define($$) {
     
     my @a = split( "[ \t][ \t]*", $def );
    
-    return "too few parameters: define <name> GoECharger <HOST>" if( @a != 3);
+    return "too few parameters: define <name> GoECharger <CLOUDTOKEN>" if( @a != 3);
     return "Cannot define a GoECharger device. Perl modul $missingModul is missing." if ( $missingModul );
     
     my $name                = $a[0];
     
-    my $host                = $a[2];
-    $hash->{HOST}           = $host;
+    my $token               = $a[2];
+    #$hash->{HOST}           = $host;
+    $hash->{CLOUDTOKEN}     = $token;
     $hash->{INTERVAL}       = 60;
     $hash->{VERSION}        = $version;
     $hash->{NOTIFYDEV}      = "global";
@@ -291,9 +292,10 @@ sub GoECharger_Define($$) {
 
     
     CommandAttr(undef,$name.' room Energie');# if ( AttrVal($name,'room','') ne '' );
-    Log3 $name, 3, "GoECharger ($name) - defined GoECharger Device with Host $host and Interval $hash->{INTERVAL}"; #Port $hash->{PORT}
+    Log3 $name, 3, "GoECharger ($name) - defined GoECharger Device with Interval $hash->{INTERVAL}"; #Port $hash->{PORT}
     
-    $modules{GoECharger}{defptr}{HOST} = $hash;
+    #$modules{GoECharger}{defptr}{HOST} = $hash;
+    $modules{GoECharger}{defptr}{CLOUDTOKEN} = $hash;
     
     # API related internals and attrib
     GoECharger_API_V15($hash);
@@ -313,7 +315,7 @@ sub GoECharger_Undef($$) {
 
 
     Log3 $name, 3, "GoECharger ($name) - Device $name deleted";
-    delete $modules{GoECharger}{defptr}{HOST} if( defined($modules{GoECharger}{defptr}{HOST}) and $hash->{HOST} );
+    delete $modules{GoECharger}{defptr}{CLOUDTOKEN} if( defined($modules{GoECharger}{defptr}{CLOUDTOKEN}) and $hash->{CLOUDTOKEN} );
 
     return undef;
 }
@@ -598,15 +600,17 @@ sub GoECharger_GetData($) {
     my ($hash)          = @_;
     
     my $name            = $hash->{NAME};
-    my $host            = $hash->{HOST};
+    #my $host            = $hash->{HOST};
+    my $token            = $hash->{CLOUDTOKEN};
     my $path            = pop( @{$hash->{ActionQueue}} );
-    my $uri             = $host.'/'.$path;
+    #my $uri             = $host.'/'.$path;
+    my $uri             = "api.go-e.co/api_status?token=$token";
 
     readingsSingleUpdate($hash,'Http_state','fetch data - ' . scalar(@{$hash->{ActionQueue}}) . ' entries in the Queue',1);
 
     HttpUtils_NonblockingGet(
         {
-            url         => "http://" . $uri,
+            url         => "https://" . $uri,
             timeout     => 5,
             method      => 'GET',
             hash        => $hash,
@@ -616,7 +620,7 @@ sub GoECharger_GetData($) {
         }
     );
     
-    Log3 $name, 4, "GoECharger ($name) - Send with URI: http://$uri (host: $host, path: $path )";
+    Log3 $name, 4, "GoECharger ($name) - Send with URI: https://$uri";
 }
 
 sub GoECharger_ErrorHandling($$$) {
@@ -716,6 +720,8 @@ sub GoECharger_WriteReadings($$$) {
     my $name = $hash->{NAME};    
     Log3 $name, 4, "GoECharger ($name) - Write Readings";
     
+    Log3 $name, 5, "GoECharger ($name) - JSON-Dumper: " . Dumper $responsedata;
+
     my $newreadingname;
     my $tmpr;
     my $tmpv;
@@ -725,6 +731,17 @@ sub GoECharger_WriteReadings($$$) {
     my @reading_keys=split(/ /,$reading_keys_json);
     readingsBeginUpdate($hash);
     
+    foreach my $datakey ( keys %{ $responsedata->{'data'} } ) {
+        my $value = $responsedata->{'data'}{$datakey};
+        Log3 $name, 5, "GoECharger ($name) - value of $datakey: $value";
+
+        # Look up a friendly reading name
+        $newreadingname=$goevar{$datakey};
+        $newreadingname=$datakey if ($newreadingname eq '');
+
+        readingsBulkUpdate( $hash, $newreadingname, $value );
+    }
+
     # walkthrough received key - value pairs
     while( my ($r,$v) = each %{$responsedata} ) {
         $newreadingname=$goevar{$r};
