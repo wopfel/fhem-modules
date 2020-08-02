@@ -745,6 +745,7 @@ sub GoECharger_WriteReadings($$$) {
         $value = sprintf( "%.2f", $value/3_600_000 )  if  $datakey eq "dto";
         $value = sprintf( "%06X", $value )            if  $datakey eq "cid" or $datakey eq "cch" or $datakey eq "cfi";
 
+        # Access control state
         if ( $datakey eq "ast" ) {
             if    ( $value == 0 )  { $value = "access_open"; }
             elsif ( $value == 2 )  { $value = "price_or_auto"; }
