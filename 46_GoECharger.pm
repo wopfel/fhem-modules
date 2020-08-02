@@ -682,7 +682,7 @@ sub GoECharger_ErrorHandling($$$) {
     GoECharger_GetData($hash)
     if( defined($hash->{ActionQueue}) and scalar(@{$hash->{ActionQueue}}) > 0 );
     
-    Log3 $name, 4, "GoECharger ($name) - Recieve JSON data: $data";
+    Log3 $name, 4, "GoECharger ($name) - Receive JSON data: $data";
     
     GoECharger_ResponseProcessing($hash,$param->{setCmd},$data);
 }
