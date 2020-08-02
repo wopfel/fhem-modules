@@ -781,7 +781,19 @@ sub GoECharger_WriteReadings($$$) {
             elsif ( $value == 2 )  { $value = "locked_always"; }
             else                   { $value = "*unknown*"; }
         }
-        
+
+        # Last update (the time doesn't change if the box is disconnected)
+        if ( $datakey eq "tme" ) {
+            # 0208201645
+            my ( $dd, $mm, $yy, $hour, $minute ) = $value =~ /^(..)(..)(..)(..)(..)$/;
+            $yy += 2000;
+
+            my $tmpr = "last_update";
+            my $tmpv = "$yy-$mm-$dd $hour:$minute";
+
+            readingsBulkUpdate( $hash, $tmpr, $tmpv );
+        }
+
         readingsBulkUpdate( $hash, $newreadingname, $value );
     }
 
