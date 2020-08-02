@@ -1,6 +1,7 @@
 ###############################################################################
 # 
 #  (c) 2020 Copyright Lutz R., Fhem forum user LR66 (LR66 at gmx dot de)
+#  (c) 2020 by Bernd Arnold
 #  All rights reserved
 #
 #  This script is free software; you can redistribute it and/or modify
