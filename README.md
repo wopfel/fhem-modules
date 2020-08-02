@@ -8,4 +8,5 @@ Todo
 - [ ] Rework USED_API_KEYS
 - [ ] Update html documentation in .pm file
 - [ ] Add version history hash
+- [ ] Set as package FHEM::...
 
