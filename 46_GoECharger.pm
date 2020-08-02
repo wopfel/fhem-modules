@@ -377,9 +377,9 @@ sub GoECharger_Attr(@) {
 
     if( $attrName eq "interval" ) {
         if( $cmd eq "set" ) {
-            if( $attrVal < 5 ) {
-                Log3 $name, 3, "GoECharger ($name) - interval too small, please use something >= 5 (sec), default is $interval_default (sec)";
-                return "interval too small, please use something >= 5 (sec), default is $interval_default (sec)";
+            if( $attrVal < 60 ) {
+                Log3 $name, 3, "GoECharger ($name) - interval too small, please use something >= 60 (sec), default is $interval_default (sec)";
+                return "interval too small, please use something >= 60 (sec), default is $interval_default (sec)";
             
             } else {
                 RemoveInternalTimer($hash);
