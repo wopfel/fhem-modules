@@ -746,7 +746,7 @@ sub GoECharger_WriteReadings($$$) {
 
         # Improve value output (mor readable, hopefully)
         $value = sprintf( "%.1f", $value/10 )         if  $datakey eq "eto";
-        $value = sprintf( "%.1f", $value/360_000 )    if  $datakey eq "dws";
+        $value = sprintf( "%.2f", $value/360_000 )    if  $datakey eq "dws";
         $value = sprintf( "%.1f", $value/10 )         if  $datakey eq "dwo";
         $value = sprintf( "%.2f", $value/3_600_000 )  if  $datakey eq "dto";
         $value = sprintf( "%06X", $value )            if  $datakey eq "cid" or $datakey eq "cch" or $datakey eq "cfi";
