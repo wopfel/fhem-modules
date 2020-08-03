@@ -855,19 +855,21 @@ sub GoECharger_WriteReadings($$$) {
     <a name="GoEChargerdefine"></a>
     <b>Define</b>
     <ul><br>
-        <code>define &lt;name&gt; GoECharger &lt;hostip&gt;</code>
+        <code>define &lt;name&gt; GoECharger &lt;token&gt;</code>
     <br><br>
     Example:
     <br>
-        <code>define myGoE GoECharger 192.168.1.34</code><br>
+        <code>define myGoE GoECharger abc123def4</code><br>
     <br>
-    This statement creates a device with the name myGoE and the Host IP 192.168.1.34 and a default polling interval of 300 sec.<br>
+    This statement creates a device with the name myGoE and the token abc123def4 and a default polling interval of 300 sec.
+    You'll find your personal token on the chipcard which was shipped with your charger wallbox.<br>
     After the device has been created, the current data of the go-Echarger are automatically read and default readings will be generated.<br>
     </ul>
     <br><br>
     <a name="GoEChargerreadings"></a>
     <b>Readings</b>
     <ul>
+        Please note: the following description isn't suitable at the moment!<br>
         At default only some readings are present. The 'state' reading is derived from JSON API keys 'car' and 'alw'.<br>
         The original "xxx" JSON API key will be appended with a description to show as reading. <br>
         All, default and your personal key selection and the resulting readings are configurable via Attribute "used_api_keys".<br>
