@@ -12,3 +12,8 @@ my $json_data = decode_json( $json_string );
 print Dumper $json_data;
 
 print keys %{ $json_data->{'data'} };
+
+my @vtmp = @{ $json_data->{'data'}{'tma'} };
+my $value = join " ", @vtmp;
+
+print "\n<< $value >>\n";

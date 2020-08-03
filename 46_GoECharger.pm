@@ -775,6 +775,12 @@ sub GoECharger_WriteReadings($$$) {
             readingsBulkUpdate( $hash, $tmpr, $tmpv );
         }
 
+        # Join all values from curr_sense_Typ2 as string
+        if ( $datakey eq "tma" ) {
+            my @vtmp = @{ $responsedata->{'data'}{'tma'} };
+            $value = join " ", @vtmp;
+        }
+
         # Cable lock state at box
         if ( $datakey eq "ust" ) {
             if    ( $value == 0 )  { $value = "while_car_present"; }
