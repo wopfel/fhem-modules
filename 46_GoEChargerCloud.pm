@@ -1085,7 +1085,7 @@ sub WriteReadings($$$) {
     <a name="GoEChargerCloudattribute"></a>
     <b>Attribute</b>
     <ul>
-        <li>interval                    - interval in seconds for automatically fetch data (default 300, min. 60)</li>
+        <li>interval                    - interval in seconds for automatically fetch data (default 300, min. 60), please respect the hard and fair use limit as stated in the API documentation by go-e GmbH</li>
         <li>used_api_keys               - use predefined sets of JSON API keys which will be shown as readings: <br>
         use predefined settings 'default', 'minima'l or 'all' ore define your own space separetet list of JSON API keys<br>
         (see above or API reference or Internal [UsedAPIKeys] for examples).</li>
