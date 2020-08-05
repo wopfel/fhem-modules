@@ -19,11 +19,10 @@
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
 #
+#  Credits (thank you!):
+#    Heiko Maaz: author of 76_SMAPortal.pm
+#
 ###############################################################################
-##
-##
-# based at and tested with goE-Charger firmware 033 and API 1.5
-# and mail 14.04.20 from go-e (thanks go-e)
 
 
 package FHEM::GoEChargerCloud;
