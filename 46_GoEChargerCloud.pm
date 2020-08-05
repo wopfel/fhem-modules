@@ -26,17 +26,100 @@
 # and mail 14.04.20 from go-e (thanks go-e)
 
 
-package main;
+package FHEM::GoEChargerCloud;
 
 
 my $missingModul = "";
 
 use strict;
 use warnings;
-
+use GPUtils qw(GP_Import GP_Export);  # wird für den Import der hem- Funktionen aus der fhem.pl benötigt
 use HttpUtils;
+use Data::Dumper;
 eval "use JSON;1" or $missingModul .= "JSON ";
 
+# Run before module compilation
+BEGIN {
+  # Import from main::
+  GP_Import(
+      qw(
+          attr
+          AnalyzePerlCommand
+          AttrVal
+          AttrNum
+          addToDevAttrList
+          addToAttrList
+          BlockingCall
+          BlockingKill
+          BlockingInformParent
+          CommandAttr
+          CommandDefine
+          CommandDeleteAttr
+          CommandDeleteReading
+          CommandSet
+          defs
+          delFromDevAttrList
+          delFromAttrList
+          devspec2array
+          deviceEvents
+          Debug
+          FmtDateTime
+          FmtTime
+          fhemTzOffset
+          FW_makeImage
+          fhemTimeGm
+          fhemTimeLocal
+          getKeyValue
+          gettimeofday
+          genUUID
+          HttpUtils_NonblockingGet
+          init_done
+          InternalTimer
+          IsDisabled
+          Log
+          Log3
+          makeReadingName
+          modules
+          readingsSingleUpdate
+          readingsBulkUpdate
+          readingsBulkUpdateIfChanged
+          readingsBeginUpdate
+          readingsDelete
+          readingsEndUpdate
+          ReadingsNum
+          ReadingsTimestamp
+          ReadingsVal
+          RemoveInternalTimer
+          readingFnAttributes
+          setKeyValue
+          sortTopicNum
+          TimeNow
+          Value
+          json2nameValue
+          FW_cmd
+          FW_directNotify
+          FW_ME
+          FW_subdir
+          FW_room
+          FW_detail
+          FW_wname
+        )
+  );
+
+  # Export to main context with different name
+  #     my $pkg  = caller(0);
+  #     my $main = $pkg;
+  #     $main =~ s/^(?:.+::)?([^:]+)$/main::$1\_/gx;
+  #     for (@_) {
+  #         *{ $main . $_ } = *{ $pkg . '::' . $_ };
+  #     }
+  GP_Export(
+      qw(
+          Initialize
+        )
+  );
+
+}
 
 my $version = "0.1.5";
 
@@ -231,34 +314,26 @@ $reading_keys_json=$reading_keys_json_default;
 
 
 # Declare functions
-sub GoEChargerCloud_Attr(@);
-sub GoEChargerCloud_Define($$);
-sub GoEChargerCloud_Initialize($);
-sub GoEChargerCloud_Get($@);
-sub GoEChargerCloud_Notify($$);
-sub GoEChargerCloud_GetData($);
-sub GoEChargerCloud_Undef($$);
-sub GoEChargerCloud_ResponseProcessing($$$);
-sub GoEChargerCloud_ErrorHandling($$$);
-sub GoEChargerCloud_WriteReadings($$$);
-sub GoEChargerCloud_Timer_GetData($);
+sub ResponseProcessing($$$);
+sub ErrorHandling($$$);
+sub WriteReadings($$$);
+sub Timer_GetData($);
 
 my %paths = (   'status'    => '/status'
             );
 
 
-sub GoEChargerCloud_Initialize($) {
+sub Initialize {
 
     my ($hash) = @_;
     
     # Consumer
-    $hash->{GetFn}      = "GoEChargerCloud_Get";
-    $hash->{SetFn}      = "GoEChargerCloud_Set";
-    $hash->{DefFn}      = "GoEChargerCloud_Define";
-    $hash->{UndefFn}    = "GoEChargerCloud_Undef";
-    $hash->{NotifyFn}   = "GoEChargerCloud_Notify";
-    
-    $hash->{AttrFn}     = "GoEChargerCloud_Attr";
+    $hash->{DefFn}      = \&Define;
+    $hash->{UndefFn}    = \&Undef;
+    $hash->{AttrFn}     = \&Attr;
+    $hash->{SetFn}      = \&Set;
+    $hash->{GetFn}      = \&Get;
+    $hash->{AttrFn}     = \&Attr;
     $hash->{AttrList}   = "interval ".
                           "disable:1 ".
                           "used_api_keys ".
@@ -271,7 +346,7 @@ sub GoEChargerCloud_Initialize($) {
     }
 }
 
-sub GoEChargerCloud_Define($$) {
+sub Define($$) {
 
     my ( $hash, $def ) = @_;
     
@@ -307,7 +382,7 @@ sub GoEChargerCloud_Define($$) {
     return undef;
 }
 
-sub GoEChargerCloud_Undef($$) {
+sub Undef($$) {
 
     my ( $hash, $arg )  = @_;
     
@@ -320,7 +395,7 @@ sub GoEChargerCloud_Undef($$) {
     return undef;
 }
 
-sub GoEChargerCloud_Attr(@) {
+sub Attr(@) {
 
     my ( $cmd, $name, $attrName, $attrVal ) = @_;
     my $hash = $defs{$name};
@@ -367,12 +442,12 @@ sub GoEChargerCloud_Attr(@) {
         }
         $hash->{USED_API_KEYS}  = $reading_keys_json;
         # delete all readings
-        {fhem ("deletereading $name .*")};
+        {main::fhem ("deletereading $name .*")};
         
         return 'There are still path commands in the action queue'
             if( defined($hash->{ActionQueue}) and scalar(@{$hash->{ActionQueue}}) > 0 );
         unshift( @{$hash->{ActionQueue}}, 'status' );
-        GoEChargerCloud_GetData($hash);          
+        GetData($hash);
     }
 
     if( $attrName eq "interval" ) {
@@ -385,20 +460,20 @@ sub GoEChargerCloud_Attr(@) {
                 RemoveInternalTimer($hash);
                 $hash->{INTERVAL} = $attrVal;
                 Log3 $name, 3, "GoEChargerCloud ($name) - set interval to $attrVal";
-                GoEChargerCloud_Timer_GetData($hash);
+                Timer_GetData($hash);
             }
         } elsif( $cmd eq "del" ) {
             RemoveInternalTimer($hash);
             $hash->{INTERVAL} = $interval_default;
             Log3 $name, 3, "GoEChargerCloud ($name) - set interval to default";
-            GoEChargerCloud_Timer_GetData($hash);
+            Timer_GetData($hash);
         }
     }
     
     return undef;
 }
 
-sub GoEChargerCloud_Notify($$) {
+sub Notify($$) {
 
     my ($hash,$dev) = @_;
     my $name = $hash->{NAME};
@@ -409,14 +484,14 @@ sub GoEChargerCloud_Notify($$) {
     my $events = deviceEvents($dev,1);
     return if (!$events);
 
-    GoEChargerCloud_Timer_GetData($hash) if( grep /^INITIALIZED$/,@{$events}
+    Timer_GetData($hash) if( grep /^INITIALIZED$/,@{$events}
                                                 or grep /^DELETEATTR.$name.disable$/,@{$events}
                                                 or grep /^DELETEATTR.$name.interval$/,@{$events}
                                                 or (grep /^DEFINED.$name$/,@{$events} and $init_done) );
     return;
 }
 
-sub GoEChargerCloud_Get($@) {
+sub Get($@) {
     
     my ($hash, $name, $cmd) = @_;
     my $arg;
@@ -432,12 +507,12 @@ sub GoEChargerCloud_Get($@) {
     if( defined($hash->{ActionQueue}) and scalar(@{$hash->{ActionQueue}}) > 0 );
     
     unshift( @{$hash->{ActionQueue}}, $arg );
-    GoEChargerCloud_GetData($hash);
+    GetData($hash);
 
     return undef;
 }
 
-sub GoEChargerCloud_Set($@) {
+sub Set($@) {
     
     my ($hash, $name, $cmd, $arg) = @_;
     my $queue_cmd='';
@@ -566,13 +641,13 @@ sub GoEChargerCloud_Set($@) {
     if( defined($hash->{ActionQueue}) and scalar(@{$hash->{ActionQueue}}) > 0 );
     
     unshift( @{$hash->{ActionQueue}}, $queue_cmd) if ($queue_cmd ne '');
-    GoEChargerCloud_GetData($hash);
+    GetData($hash);
 
     return undef;
 }
 
 
-sub GoEChargerCloud_Timer_GetData($) {
+sub Timer_GetData($) {
 
     my $hash    = shift;
     my $name    = $hash->{NAME};
@@ -584,18 +659,18 @@ sub GoEChargerCloud_Timer_GetData($) {
                 unshift( @{$hash->{ActionQueue}}, $obj );
             }
         
-            GoEChargerCloud_GetData($hash);
+            GetData($hash);
         
         } else {
             readingsSingleUpdate($hash,'Http_state','disabled',1);
         }
     }
     
-    InternalTimer( gettimeofday()+$hash->{INTERVAL}, 'GoEChargerCloud_Timer_GetData', $hash );
-    Log3 $name, 4, "GoEChargerCloud ($name) - Call InternalTimer GoEChargerCloud_Timer_GetData";
+    InternalTimer( gettimeofday()+$hash->{INTERVAL}, 'FHEM::GoEChargerCloud::Timer_GetData', $hash );
+    Log3 $name, 4, "GoEChargerCloud ($name) - Call InternalTimer FHEM::GoEChargerCloud::Timer_GetData";
 }
 
-sub GoEChargerCloud_GetData($) {
+sub GetData($) {
 
     my ($hash)          = @_;
     
@@ -622,14 +697,14 @@ sub GoEChargerCloud_GetData($) {
             hash        => $hash,
             setCmd      => $path,
             doTrigger   => 1,
-            callback    => \&GoEChargerCloud_ErrorHandling,
+            callback    => \&ErrorHandling,
         }
     );
     
     Log3 $name, 4, "GoEChargerCloud ($name) - Send with URI: https://$uri";
 }
 
-sub GoEChargerCloud_ErrorHandling($$$) {
+sub ErrorHandling($$$) {
 
     my ($param,$err,$data)  = @_;
     
@@ -687,15 +762,15 @@ sub GoEChargerCloud_ErrorHandling($$$) {
         ### End Error Handling
     }
     
-    GoEChargerCloud_GetData($hash)
+    GetData($hash)
     if( defined($hash->{ActionQueue}) and scalar(@{$hash->{ActionQueue}}) > 0 );
     
     Log3 $name, 4, "GoEChargerCloud ($name) - Receive JSON data: $data";
     
-    GoEChargerCloud_ResponseProcessing($hash,$param->{setCmd},$data);
+    ResponseProcessing($hash,$param->{setCmd},$data);
 }
 
-sub GoEChargerCloud_ResponseProcessing($$$) {
+sub ResponseProcessing($$$) {
 
     my ($hash,$path,$json)        = @_;
     
@@ -717,10 +792,10 @@ sub GoEChargerCloud_ResponseProcessing($$$) {
     #### Verarbeitung der Readings zum passenden Path
     
     $responsedata = $decode_json;
-    GoEChargerCloud_WriteReadings($hash,$path,$responsedata);
+    WriteReadings($hash,$path,$responsedata);
 }
 
-sub GoEChargerCloud_WriteReadings($$$) {
+sub WriteReadings($$$) {
 
     my ($hash,$path,$responsedata)    = @_;    
     my $name = $hash->{NAME};    
