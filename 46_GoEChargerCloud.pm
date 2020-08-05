@@ -231,54 +231,54 @@ $reading_keys_json=$reading_keys_json_default;
 
 
 # Declare functions
-sub GoECharger_Attr(@);
-sub GoECharger_Define($$);
-sub GoECharger_Initialize($);
-sub GoECharger_Get($@);
-sub GoECharger_Notify($$);
-sub GoECharger_GetData($);
-sub GoECharger_Undef($$);
-sub GoECharger_ResponseProcessing($$$);
-sub GoECharger_ErrorHandling($$$);
-sub GoECharger_WriteReadings($$$);
-sub GoECharger_Timer_GetData($);
+sub GoEChargerCloud_Attr(@);
+sub GoEChargerCloud_Define($$);
+sub GoEChargerCloud_Initialize($);
+sub GoEChargerCloud_Get($@);
+sub GoEChargerCloud_Notify($$);
+sub GoEChargerCloud_GetData($);
+sub GoEChargerCloud_Undef($$);
+sub GoEChargerCloud_ResponseProcessing($$$);
+sub GoEChargerCloud_ErrorHandling($$$);
+sub GoEChargerCloud_WriteReadings($$$);
+sub GoEChargerCloud_Timer_GetData($);
 
 my %paths = (   'status'    => '/status'
             );
 
 
-sub GoECharger_Initialize($) {
+sub GoEChargerCloud_Initialize($) {
 
     my ($hash) = @_;
     
     # Consumer
-    $hash->{GetFn}      = "GoECharger_Get";
-    $hash->{SetFn}      = "GoECharger_Set";
-    $hash->{DefFn}      = "GoECharger_Define";
-    $hash->{UndefFn}    = "GoECharger_Undef";
-    $hash->{NotifyFn}   = "GoECharger_Notify";
+    $hash->{GetFn}      = "GoEChargerCloud_Get";
+    $hash->{SetFn}      = "GoEChargerCloud_Set";
+    $hash->{DefFn}      = "GoEChargerCloud_Define";
+    $hash->{UndefFn}    = "GoEChargerCloud_Undef";
+    $hash->{NotifyFn}   = "GoEChargerCloud_Notify";
     
-    $hash->{AttrFn}     = "GoECharger_Attr";
+    $hash->{AttrFn}     = "GoEChargerCloud_Attr";
     $hash->{AttrList}   = "interval ".
                           "disable:1 ".
                           "used_api_keys ".
                           $readingFnAttributes;
     
-    foreach my $d(sort keys %{$modules{GoECharger}{defptr}}) {
+    foreach my $d(sort keys %{$modules{GoEChargerCloud}{defptr}}) {
     
-        my $hash = $modules{GoECharger}{defptr}{$d};
+        my $hash = $modules{GoEChargerCloud}{defptr}{$d};
         $hash->{VERSION}      = $version;
     }
 }
 
-sub GoECharger_Define($$) {
+sub GoEChargerCloud_Define($$) {
 
     my ( $hash, $def ) = @_;
     
     my @a = split( "[ \t][ \t]*", $def );
    
-    return "too few parameters: define <name> GoECharger <CLOUDTOKEN>" if( @a != 3);
-    return "Cannot define a GoECharger device. Perl modul $missingModul is missing." if ( $missingModul );
+    return "too few parameters: define <name> GoEChargerCloud <CLOUDTOKEN>" if( @a != 3);
+    return "Cannot define a GoEChargerCloud device. Perl modul $missingModul is missing." if ( $missingModul );
     
     my $name                = $a[0];
     
@@ -292,10 +292,10 @@ sub GoECharger_Define($$) {
 
     
     CommandAttr(undef,$name.' room Energie');# if ( AttrVal($name,'room','') ne '' );
-    Log3 $name, 3, "GoECharger ($name) - defined GoECharger Device with Interval $hash->{INTERVAL}"; #Port $hash->{PORT}
+    Log3 $name, 3, "GoEChargerCloud ($name) - defined GoEChargerCloud Device with Interval $hash->{INTERVAL}"; #Port $hash->{PORT}
     
     #$modules{GoECharger}{defptr}{HOST} = $hash;
-    $modules{GoECharger}{defptr}{CLOUDTOKEN} = $hash;
+    $modules{GoEChargerCloud}{defptr}{CLOUDTOKEN} = $hash;
     
     # API related internals and attrib
     #GoECharger_API_V15($hash);
@@ -307,20 +307,20 @@ sub GoECharger_Define($$) {
     return undef;
 }
 
-sub GoECharger_Undef($$) {
+sub GoEChargerCloud_Undef($$) {
 
     my ( $hash, $arg )  = @_;
     
     my $name            = $hash->{NAME};
 
 
-    Log3 $name, 3, "GoECharger ($name) - Device $name deleted";
-    delete $modules{GoECharger}{defptr}{CLOUDTOKEN} if( defined($modules{GoECharger}{defptr}{CLOUDTOKEN}) and $hash->{CLOUDTOKEN} );
+    Log3 $name, 3, "GoEChargerCloud ($name) - Device $name deleted";
+    delete $modules{GoEChargerCloud}{defptr}{CLOUDTOKEN} if( defined($modules{GoEChargerCloud}{defptr}{CLOUDTOKEN}) and $hash->{CLOUDTOKEN} );
 
     return undef;
 }
 
-sub GoECharger_Attr(@) {
+sub GoEChargerCloud_Attr(@) {
 
     my ( $cmd, $name, $attrName, $attrVal ) = @_;
     my $hash = $defs{$name};
@@ -330,10 +330,10 @@ sub GoECharger_Attr(@) {
         if( $cmd eq "set" and $attrVal eq "1" ) {
             RemoveInternalTimer($hash);
             readingsSingleUpdate ( $hash, "state", "disabled", 1 );
-            Log3 $name, 3, "GoECharger ($name) - disabled";
+            Log3 $name, 3, "GoEChargerCloud ($name) - disabled";
         
         } elsif( $cmd eq "del" ) {
-            Log3 $name, 3, "GoECharger ($name) - enabled";
+            Log3 $name, 3, "GoEChargerCloud ($name) - enabled";
         }
     }
     
@@ -341,11 +341,11 @@ sub GoECharger_Attr(@) {
         if( $cmd eq "set" ) {
             return "check disabledForIntervals Syntax HH:MM-HH:MM or 'HH:MM-HH:MM HH:MM-HH:MM ...'"
             unless($attrVal =~ /^((\d{2}:\d{2})-(\d{2}:\d{2})\s?)+$/);
-            Log3 $name, 3, "GoECharger ($name) - disabledForIntervals";
+            Log3 $name, 3, "GoEChargerCloud ($name) - disabledForIntervals";
             readingsSingleUpdate ( $hash, "state", "disabled", 1 );
         
         } elsif( $cmd eq "del" ) {
-            Log3 $name, 3, "GoECharger ($name) - enabled";
+            Log3 $name, 3, "GoEChargerCloud ($name) - enabled";
             readingsSingleUpdate( $hash, "state", "active", 1 );
         }
     }
@@ -372,33 +372,33 @@ sub GoECharger_Attr(@) {
         return 'There are still path commands in the action queue'
             if( defined($hash->{ActionQueue}) and scalar(@{$hash->{ActionQueue}}) > 0 );
         unshift( @{$hash->{ActionQueue}}, 'status' );
-        GoECharger_GetData($hash);          
+        GoEChargerCloud_GetData($hash);          
     }
 
     if( $attrName eq "interval" ) {
         if( $cmd eq "set" ) {
             if( $attrVal < 60 ) {
-                Log3 $name, 3, "GoECharger ($name) - interval too small, please use something >= 60 (sec), default is $interval_default (sec)";
+                Log3 $name, 3, "GoEChargerCloud ($name) - interval too small, please use something >= 60 (sec), default is $interval_default (sec)";
                 return "interval too small, please use something >= 60 (sec), default is $interval_default (sec)";
             
             } else {
                 RemoveInternalTimer($hash);
                 $hash->{INTERVAL} = $attrVal;
-                Log3 $name, 3, "GoECharger ($name) - set interval to $attrVal";
-                GoECharger_Timer_GetData($hash);
+                Log3 $name, 3, "GoEChargerCloud ($name) - set interval to $attrVal";
+                GoEChargerCloud_Timer_GetData($hash);
             }
         } elsif( $cmd eq "del" ) {
             RemoveInternalTimer($hash);
             $hash->{INTERVAL} = $interval_default;
-            Log3 $name, 3, "GoECharger ($name) - set interval to default";
-            GoECharger_Timer_GetData($hash);
+            Log3 $name, 3, "GoEChargerCloud ($name) - set interval to default";
+            GoEChargerCloud_Timer_GetData($hash);
         }
     }
     
     return undef;
 }
 
-sub GoECharger_Notify($$) {
+sub GoEChargerCloud_Notify($$) {
 
     my ($hash,$dev) = @_;
     my $name = $hash->{NAME};
@@ -409,14 +409,14 @@ sub GoECharger_Notify($$) {
     my $events = deviceEvents($dev,1);
     return if (!$events);
 
-    GoECharger_Timer_GetData($hash) if( grep /^INITIALIZED$/,@{$events}
+    GoEChargerCloud_Timer_GetData($hash) if( grep /^INITIALIZED$/,@{$events}
                                                 or grep /^DELETEATTR.$name.disable$/,@{$events}
                                                 or grep /^DELETEATTR.$name.interval$/,@{$events}
                                                 or (grep /^DEFINED.$name$/,@{$events} and $init_done) );
     return;
 }
 
-sub GoECharger_Get($@) {
+sub GoEChargerCloud_Get($@) {
     
     my ($hash, $name, $cmd) = @_;
     my $arg;
@@ -432,12 +432,12 @@ sub GoECharger_Get($@) {
     if( defined($hash->{ActionQueue}) and scalar(@{$hash->{ActionQueue}}) > 0 );
     
     unshift( @{$hash->{ActionQueue}}, $arg );
-    GoECharger_GetData($hash);
+    GoEChargerCloud_GetData($hash);
 
     return undef;
 }
 
-sub GoECharger_Set($@) {
+sub GoEChargerCloud_Set($@) {
     
     my ($hash, $name, $cmd, $arg) = @_;
     my $queue_cmd='';
@@ -566,13 +566,13 @@ sub GoECharger_Set($@) {
     if( defined($hash->{ActionQueue}) and scalar(@{$hash->{ActionQueue}}) > 0 );
     
     unshift( @{$hash->{ActionQueue}}, $queue_cmd) if ($queue_cmd ne '');
-    GoECharger_GetData($hash);
+    GoEChargerCloud_GetData($hash);
 
     return undef;
 }
 
 
-sub GoECharger_Timer_GetData($) {
+sub GoEChargerCloud_Timer_GetData($) {
 
     my $hash    = shift;
     my $name    = $hash->{NAME};
@@ -584,18 +584,18 @@ sub GoECharger_Timer_GetData($) {
                 unshift( @{$hash->{ActionQueue}}, $obj );
             }
         
-            GoECharger_GetData($hash);
+            GoEChargerCloud_GetData($hash);
         
         } else {
             readingsSingleUpdate($hash,'Http_state','disabled',1);
         }
     }
     
-    InternalTimer( gettimeofday()+$hash->{INTERVAL}, 'GoECharger_Timer_GetData', $hash );
-    Log3 $name, 4, "GoECharger ($name) - Call InternalTimer GoECharger_Timer_GetData";
+    InternalTimer( gettimeofday()+$hash->{INTERVAL}, 'GoEChargerCloud_Timer_GetData', $hash );
+    Log3 $name, 4, "GoEChargerCloud ($name) - Call InternalTimer GoEChargerCloud_Timer_GetData";
 }
 
-sub GoECharger_GetData($) {
+sub GoEChargerCloud_GetData($) {
 
     my ($hash)          = @_;
     
@@ -610,7 +610,7 @@ sub GoECharger_GetData($) {
 
     # "status" is the same call when directly connected to the box. But when using the cloud API, it's a different URI.
     if ( $path ne "status" ) {
-        Log3 $name, 4, "GoECharger ($name) - path is set as '$path'";
+        Log3 $name, 4, "GoEChargerCloud ($name) - path is set as '$path'";
         $uri = "api.go-e.co/api?token=$token&$path";
     }
 
@@ -622,14 +622,14 @@ sub GoECharger_GetData($) {
             hash        => $hash,
             setCmd      => $path,
             doTrigger   => 1,
-            callback    => \&GoECharger_ErrorHandling,
+            callback    => \&GoEChargerCloud_ErrorHandling,
         }
     );
     
-    Log3 $name, 4, "GoECharger ($name) - Send with URI: https://$uri";
+    Log3 $name, 4, "GoEChargerCloud ($name) - Send with URI: https://$uri";
 }
 
-sub GoECharger_ErrorHandling($$$) {
+sub GoEChargerCloud_ErrorHandling($$$) {
 
     my ($param,$err,$data)  = @_;
     
@@ -647,7 +647,7 @@ sub GoECharger_ErrorHandling($$$) {
             readingsBulkUpdate( $hash, 'Http_lastRequestError', $err, 1 );
             readingsEndUpdate( $hash, 1 );
             
-            Log3 $name, 3, "GoECharger ($name) - RequestERROR: $err";
+            Log3 $name, 3, "GoEChargerCloud ($name) - RequestERROR: $err";
             
             $hash->{ActionQueue} = [];
             return;
@@ -661,11 +661,11 @@ sub GoECharger_ErrorHandling($$$) {
 
         readingsBulkUpdate( $hash, 'Http_lastRequestError', $param->{code}, 1 );
 
-        Log3 $name, 3, "GoECharger ($name) - RequestERROR: ".$param->{code};
+        Log3 $name, 3, "GoEChargerCloud ($name) - RequestERROR: ".$param->{code};
 
         readingsEndUpdate( $hash, 1 );
     
-        Log3 $name, 5, "GoECharger ($name) - RequestERROR: received http code ".$param->{code}." without any data after requesting";
+        Log3 $name, 5, "GoEChargerCloud ($name) - RequestERROR: received http code ".$param->{code}." without any data after requesting";
 
         $hash->{ActionQueue} = [];
         return;
@@ -680,22 +680,22 @@ sub GoECharger_ErrorHandling($$$) {
 
         readingsEndUpdate( $hash, 1 );
     
-        Log3 $name, 3, "GoECharger ($name) - http error ".$param->{code};
+        Log3 $name, 3, "GoEChargerCloud ($name) - http error ".$param->{code};
 
         $hash->{ActionQueue} = [];
         return;
         ### End Error Handling
     }
     
-    GoECharger_GetData($hash)
+    GoEChargerCloud_GetData($hash)
     if( defined($hash->{ActionQueue}) and scalar(@{$hash->{ActionQueue}}) > 0 );
     
-    Log3 $name, 4, "GoECharger ($name) - Receive JSON data: $data";
+    Log3 $name, 4, "GoEChargerCloud ($name) - Receive JSON data: $data";
     
-    GoECharger_ResponseProcessing($hash,$param->{setCmd},$data);
+    GoEChargerCloud_ResponseProcessing($hash,$param->{setCmd},$data);
 }
 
-sub GoECharger_ResponseProcessing($$$) {
+sub GoEChargerCloud_ResponseProcessing($$$) {
 
     my ($hash,$path,$json)        = @_;
     
@@ -706,7 +706,7 @@ sub GoECharger_ResponseProcessing($$$) {
 
     $decode_json    = eval{decode_json($json)};
     if($@){
-        Log3 $name, 4, "GoECharger ($name) - error while request: $@";
+        Log3 $name, 4, "GoEChargerCloud ($name) - error while request: $@";
         readingsBeginUpdate($hash);
         readingsBulkUpdate($hash, 'JSON Error', $@);
         readingsBulkUpdate($hash, 'Http_state', 'JSON error');
@@ -717,16 +717,16 @@ sub GoECharger_ResponseProcessing($$$) {
     #### Verarbeitung der Readings zum passenden Path
     
     $responsedata = $decode_json;
-    GoECharger_WriteReadings($hash,$path,$responsedata);
+    GoEChargerCloud_WriteReadings($hash,$path,$responsedata);
 }
 
-sub GoECharger_WriteReadings($$$) {
+sub GoEChargerCloud_WriteReadings($$$) {
 
     my ($hash,$path,$responsedata)    = @_;    
     my $name = $hash->{NAME};    
-    Log3 $name, 4, "GoECharger ($name) - Write Readings";
+    Log3 $name, 4, "GoEChargerCloud ($name) - Write Readings";
     
-    Log3 $name, 5, "GoECharger ($name) - JSON-Dumper: " . Dumper $responsedata;
+    Log3 $name, 5, "GoEChargerCloud ($name) - JSON-Dumper: " . Dumper $responsedata;
 
     my $newreadingname;
     my $numphases = 0;
@@ -737,11 +737,11 @@ sub GoECharger_WriteReadings($$$) {
     
     foreach my $datakey ( keys %{ $responsedata->{'data'} } ) {
         my $value = $responsedata->{'data'}{$datakey};
-        Log3 $name, 5, "GoECharger ($name) - value of $datakey: $value";
+        Log3 $name, 5, "GoEChargerCloud ($name) - value of $datakey: $value";
 
         # Look up a friendly reading name
         $newreadingname=$goevar{$datakey};
-        Log3 $name, 5, "GoECharger ($name) - newreadingname: $newreadingname";
+        Log3 $name, 5, "GoEChargerCloud ($name) - newreadingname: $newreadingname";
         $newreadingname=$datakey if ($newreadingname eq '');
 
         # Improve value output (mor readable, hopefully)
@@ -844,18 +844,18 @@ sub GoECharger_WriteReadings($$$) {
 =item summary       Modul to control Go-ECharger wallbox
 =begin html
 
-<a name="GoECharger"></a>
-<h3>GoECharger</h3>
+<a name="GoEChargerCloud"></a>
+<h3>GoEChargerCloud</h3>
 <ul>
-    <u><b>GoECharger - control a Go-eCharger wallbox</b></u>
+    <u><b>GoEChargerCloud - control a Go-eCharger wallbox</b></u>
     <br>
     With this module it is possible to read data and set some functions of the wallbox to monitor and control car charging.<br>
     Create a FileLog device if desired.<br>
     <br><br>
-    <a name="GoEChargerdefine"></a>
+    <a name="GoEChargerClouddefine"></a>
     <b>Define</b>
     <ul><br>
-        <code>define &lt;name&gt; GoECharger &lt;token&gt;</code>
+        <code>define &lt;name&gt; GoEChargerCloud &lt;token&gt;</code>
     <br><br>
     Example:
     <br>
@@ -866,7 +866,7 @@ sub GoECharger_WriteReadings($$$) {
     After the device has been created, the current data of the go-Echarger are automatically read and default readings will be generated.<br>
     </ul>
     <br><br>
-    <a name="GoEChargerreadings"></a>
+    <a name="GoEChargerCloudreadings"></a>
     <b>Readings</b>
     <ul>
         Please note: the following description isn't suitable at the moment!<br>
@@ -980,7 +980,7 @@ sub GoECharger_WriteReadings($$$) {
         <li>wss = wlan_ssid</li>
         <li>wst = wifi_state</li>
     </ul>
-    <a name="GoEChargerset"></a>
+    <a name="GoEChargerCloudset"></a>
     <b>set</b>
     <ul>
         It's recommended to check if the reading is present, before set a value...<br>
@@ -998,12 +998,12 @@ sub GoECharger_WriteReadings($$$) {
         <li>amp_max_wallbox             - set max current limit in Amp of your wallbox related to fuse, installation or house</li>
         <li>ap_password                 - change the on site local wallbox wifi accesspoint password (here checked as 6...12 char)</li>
     </ul>
-    <a name="GoEChargerget"></a>
+    <a name="GoEChargerCloudget"></a>
     <b>get</b>
     <ul>
         <li>status                      - fetch data now (same procedure as at interval)</li>
     </ul>
-    <a name="GoEChargerattribute"></a>
+    <a name="GoEChargerCloudattribute"></a>
     <b>Attribute</b>
     <ul>
         <li>interval                    - interval in seconds for automatically fetch data (default 300, min. 5)</li>
@@ -1021,7 +1021,7 @@ sub GoECharger_WriteReadings($$$) {
 =end html
 =begin html_DE
 
-<a name="GoECharger"></a>
+<a name="GoEChargerCloud"></a>
 <h3>Go-eCharger</h3>
 
 =end html_DE
