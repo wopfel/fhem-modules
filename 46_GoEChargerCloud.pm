@@ -22,6 +22,8 @@
 #  Credits (thank you!):
 #    Heiko Maaz: author of 76_SMAPortal.pm
 #
+#  Based at and tested with go-eCharger firmware 033 and API v1.5
+#
 ###############################################################################
 
 
