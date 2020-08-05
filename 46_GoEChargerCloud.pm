@@ -120,7 +120,7 @@ BEGIN {
 
 }
 
-my $version = "0.1.5";
+my $version = "0.0.1";
 
 my %goevar;
 my $reading_keys_json_allkeys='';
