@@ -130,6 +130,11 @@ my $reading_keys_json;
 my $maxamp=16;
 my $interval_default = 300;
 
+# Versions-Historie intern
+my %vNotesIntern = (
+  #"1.0.0"  => "03.03.2019  initial ",   <-- far away :-)
+  "0.0.1"  => "05.08.2020  seems stable now ",
+);
 
 my $icodef='disabled.*:ev-station@darkgrey not_allowed.*:ev-station@white ready_no_car.*:ev-station@blue charging.*:ev-station@darkorange waiting_for_car.*:ev-station@pink finished.*:ev-station@lime error.*:ev-station@red .*:ev-station@yellow';
 
