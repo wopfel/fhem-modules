@@ -707,7 +707,10 @@ sub GetData($) {
         }
     );
     
-    Log3 $name, 4, "GoEChargerCloud ($name) - Send with URI: https://$uri";
+    my $uri_hidden = $uri;
+    $uri_hidden =~ s/token=[[:xdigit:]]+/token=*hidden*/;
+
+    Log3 $name, 4, "GoEChargerCloud ($name) - Send with URI: https://$uri_hidden";
 }
 
 sub ErrorHandling($$$) {
@@ -717,6 +720,8 @@ sub ErrorHandling($$$) {
     my $hash                = $param->{hash};
     my $name                = $hash->{NAME};
 
+    # Hide the token if present
+    $err =~ s/token=[[:xdigit:]]+/token=*hidden*/;
 
     ### Begin Error Handling
     
