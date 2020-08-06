@@ -364,7 +364,6 @@ sub Define($$) {
     my $name                = $a[0];
     
     my $token               = $a[2];
-    #$hash->{HOST}           = $host;
     $hash->{CLOUDTOKEN}     = $token;
     $hash->{INTERVAL}       = $interval_default;
     $hash->{VERSION}        = $version;
@@ -681,10 +680,8 @@ sub GetData($) {
     my ($hash)          = @_;
     
     my $name            = $hash->{NAME};
-    #my $host            = $hash->{HOST};
     my $token            = $hash->{CLOUDTOKEN};
     my $path            = pop( @{$hash->{ActionQueue}} );
-    #my $uri             = $host.'/'.$path;
     my $uri             = "api.go-e.co/api_status?token=$token";
 
     readingsSingleUpdate($hash,'Http_state','fetch data - ' . scalar(@{$hash->{ActionQueue}}) . ' entries in the Queue',1);
