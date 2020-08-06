@@ -814,6 +814,13 @@ sub WriteReadings($$$) {
     
     Log3 $name, 5, "GoEChargerCloud ($name) - JSON-Dumper: " . Dumper $responsedata;
 
+    # If a set ... was issued, the cloud API's response is for example: {"success":true,"payload":"alw=0"}
+    if ( defined $responsedata->{'payload'} ) {
+        readingsSingleUpdate ( $hash, "payload_issued", $responsedata->{'payload'}, 1 );
+        readingsSingleUpdate ( $hash, "payload_success", $responsedata->{'success'} ? "yes" : "no", 1 );
+        return;
+    }
+
     my $newreadingname;
     my $numphases = 0;
     my $tmpstate;
