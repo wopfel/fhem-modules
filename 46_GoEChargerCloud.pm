@@ -35,7 +35,7 @@ my $missingModul = "";
 
 use strict;
 use warnings;
-use GPUtils qw(GP_Import GP_Export);  # wird für den Import der hem- Funktionen aus der fhem.pl benötigt
+use GPUtils qw(GP_Import GP_Export);  # importing the Fhem functions from fhem.pl
 use HttpUtils;
 use Data::Dumper;
 eval "use JSON;1" or $missingModul .= "JSON ";
