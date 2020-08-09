@@ -20,6 +20,7 @@
 #  GNU General Public License for more details.
 #
 #  Credits (thank you!):
+#    Lutz R. (LR66): author of the original 46_GoECharger.pm module
 #    Heiko Maaz: author of 76_SMAPortal.pm
 #
 #  Based at and tested with go-eCharger firmware 033 and API v1.5
